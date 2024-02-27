@@ -1,6 +1,7 @@
 package com.springboot.rta.socialmedia_app.service;
 
 import com.springboot.rta.socialmedia_app.dto.PostDto;
+import com.springboot.rta.socialmedia_app.payLoad.PostResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.List;
 public interface PostService {
     PostDto createPost(PostDto postDto);
 
-    List<PostDto> getAllPosts();
+    PostResponse getAllPosts(int pageNo, int pageSize);
 
     PostDto findPostByID(Long id);
 
