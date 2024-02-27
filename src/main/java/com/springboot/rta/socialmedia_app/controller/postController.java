@@ -1,6 +1,7 @@
 package com.springboot.rta.socialmedia_app.controller;
 
 import com.springboot.rta.socialmedia_app.dto.PostDto;
+import com.springboot.rta.socialmedia_app.payLoad.PostResponse;
 import com.springboot.rta.socialmedia_app.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,10 +21,14 @@ public class postController {
      PostDto  savedPostDto =postService.createPost(postDto);
         return new ResponseEntity(savedPostDto, HttpStatus.CREATED);
     }
+    //pagination and sorting
     @GetMapping
-    public List<PostDto> getALlPosts(){
+    public PostResponse getALlPosts(
+      @RequestParam(value="pageNo",defaultValue = "0",required = false) int pageNo,
+      @RequestParam(value="pageSize",defaultValue = "0",required = false) int pageSize
+    ){
 
-    return postService.getAllPosts();
+    return postService.getAllPosts(pageNo,pageSize);
     }
     @GetMapping("/{id}")
     public ResponseEntity<PostDto> findPostByID(@PathVariable("id") Long id){
