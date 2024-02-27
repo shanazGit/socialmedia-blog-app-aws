@@ -3,9 +3,13 @@ package com.springboot.rta.socialmedia_app.service.implementation;
 import com.springboot.rta.socialmedia_app.dto.PostDto;
 import com.springboot.rta.socialmedia_app.entity.Post;
 import com.springboot.rta.socialmedia_app.exception.ResourceNotFoundException;
+import com.springboot.rta.socialmedia_app.payLoad.PostResponse;
 import com.springboot.rta.socialmedia_app.repository.PostRepository;
 import com.springboot.rta.socialmedia_app.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,11 +30,26 @@ public class ServiceImpl implements PostService {
       return savedPostDto;
     }
     @Override
-    public List<PostDto> getAllPosts() {
-        List<Post> allPosts= postRepository.findAll();
+    public PostResponse getAllPosts(int pageNo,int pageSize) {
+        Pageable pageable=PageRequest.of(pageNo,pageSize);
+       // List<Post> allPosts= postRepository.findAll();
+       Page<Post>posts = postRepository.findAll(pageable);
+       List<Post> postList=posts.getContent();
         //map post Entity to Dto
-       List<PostDto>postDtoList =allPosts.stream().map(post-> mapEntityTODto(post)).collect(Collectors.toList());
-        return postDtoList;
+      // List<PostDto>postDtoList =allPosts .stream().map(post-> mapEntityTODto(post)).collect(Collectors.toList());
+        List<PostDto>postDtoList =postList .stream().map(post-> mapEntityTODto(post)).collect(Collectors.toList());
+        //customise postResponse resource
+        PostResponse postResponse= PostResponse
+                .builder()
+                .content(postDtoList)
+                .pageNo(posts.getNumber())
+                .pageSize(posts.getSize())
+                .totalElements(posts.getTotalElements())
+                .totalPages(posts.getTotalPages())
+                .isLastPage(posts.isLast())
+                .build();
+
+        return postResponse;
     }
 
     @Override
