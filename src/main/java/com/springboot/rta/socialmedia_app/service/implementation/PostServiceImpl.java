@@ -1,7 +1,7 @@
 package com.springboot.rta.socialmedia_app.service.implementation;
 
 import com.springboot.rta.socialmedia_app.dto.PostDto;
-import com.springboot.rta.socialmedia_app.entity.Post;
+import com.springboot.rta.socialmedia_app.Entity.Post;
 import com.springboot.rta.socialmedia_app.exception.ResourceNotFoundException;
 import com.springboot.rta.socialmedia_app.payLoad.PostResponse;
 import com.springboot.rta.socialmedia_app.repository.PostRepository;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class ServiceImpl implements PostService {
+public class PostServiceImpl implements PostService {
     @Autowired
    private PostRepository postRepository;
     @Override
