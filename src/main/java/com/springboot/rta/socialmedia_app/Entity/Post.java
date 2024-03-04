@@ -1,10 +1,13 @@
-package com.springboot.rta.socialmedia_app.entity;
+package com.springboot.rta.socialmedia_app.Entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
 import lombok.NoArgsConstructor;
+
+import java.util.HashSet;
+import java.util.Set;
+
 
 
 @Data
@@ -23,5 +26,9 @@ public class Post {
     private String description;
     @Column(name="content")
     private String content;
+
+    //OneToMany Mapping b/w Post to Comments
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Comment> comments = new HashSet<>();
 
 }
