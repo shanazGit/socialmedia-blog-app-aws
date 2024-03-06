@@ -4,7 +4,7 @@ import com.springboot.rta.socialmedia_app.dto.PostDto;
 import com.springboot.rta.socialmedia_app.payLoad.PostResponse;
 import org.springframework.stereotype.Service;
 
-@Service
+
 public interface PostService {
     PostDto createPost(PostDto postDto);
 
