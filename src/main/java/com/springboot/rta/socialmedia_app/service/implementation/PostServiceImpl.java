@@ -6,6 +6,7 @@ import com.springboot.rta.socialmedia_app.exception.ResourceNotFoundException;
 import com.springboot.rta.socialmedia_app.payLoad.PostResponse;
 import com.springboot.rta.socialmedia_app.repository.PostRepository;
 import com.springboot.rta.socialmedia_app.service.PostService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 public class PostServiceImpl implements PostService {
     @Autowired
    private PostRepository postRepository;
+    @Autowired
+    private ModelMapper modelMapper;
     @Override
     public PostDto createPost(PostDto postDto) {
         //map postDto to Entity
@@ -88,22 +91,12 @@ public class PostServiceImpl implements PostService {
     }
 
     private PostDto mapEntityTODto(Post post) {
-        PostDto postDto=new PostDto();
-        postDto.setId(post.getId());
-        postDto.setTitle(post.getTitle());
-        postDto.setDescription(post.getDescription());
-        postDto.setContent(post.getContent());
+       return  modelMapper.map(post,PostDto.class);
 
-        return postDto;
     }
     private Post mapDtoToEntity(PostDto postDto){
-       Post post=new Post();
-        post.setId(postDto.getId());
-        post.setTitle(postDto.getTitle());
-        post.setDescription(postDto.getDescription());
-        post.setContent(postDto.getContent());
+        return modelMapper.map(postDto,Post.class);
 
-        return post;
     }
 
 
