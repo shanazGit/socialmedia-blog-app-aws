@@ -1,5 +1,10 @@
 package com.springboot.rta.socialmedia_app.service.implementation;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.springboot.rta.socialmedia_app.Entity.Comment;
 import com.springboot.rta.socialmedia_app.Entity.Post;
 import com.springboot.rta.socialmedia_app.dto.CommentDto;
@@ -9,9 +14,11 @@ import com.springboot.rta.socialmedia_app.exception.ResourceNotFoundException;
 import com.springboot.rta.socialmedia_app.repository.CommentRepository;
 import com.springboot.rta.socialmedia_app.repository.PostRepository;
 import com.springboot.rta.socialmedia_app.service.CommentService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 
@@ -26,6 +33,8 @@ public class CommentServiceImpl implements CommentService {
 
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private ModelMapper modelMapper;
 
 
     public CommentDto createComment(long postId, CommentDto commentDto) {
@@ -68,12 +77,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto updateCommentsByPostIdAndCommentId(Long postId) {
-        return null;
-    }
-
-    @Override
-    public CommentDto updateCommentPartiallyByPostIdAndCommentId(long postId, long id, PatchDto patchDto) {
+    public CommentDto updateCommentsByPostIdAndCommentId(Long postId, long id, CommentDto commentDto) {
         //fetch posts by postId
         Post postEntity=postRepository.findById(postId).orElseThrow(()->new ResourceNotFoundException("post","id",String.valueOf(postId)));
         //fetch comments bt comment id
@@ -83,11 +87,81 @@ public class CommentServiceImpl implements CommentService {
             throw new BlogApiException(HttpStatus.BAD_REQUEST,"Bad Request comment not fount in the post");
 
         }
-        partiallyUpdateCommentEntity(patchDto,commentEntity);
-        Comment updatedCommentEntity=commentRepository.save(commentEntity);
-        //map comment entity to dto
-        CommentDto updatedCommentDto=mapEntityToDto(updatedCommentEntity);
+        // Update old Comment Details With new Comment Dto
+        commentEntity.setName(commentDto.getName());
+        commentEntity.setEmail(commentDto.getEmail());
+        commentEntity.setBody(commentDto.getBody());
+
+        //Save Updated Comment Entity
+        Comment updatedCommentEntity  = commentRepository.save(commentEntity);
+
+        // Map Comment Entity to Comment DTO
+        CommentDto updatedCommentDto = mapEntityToDto(updatedCommentEntity);
+
         return updatedCommentDto;
+    }
+
+    @Override
+    public CommentDto updateCommentPartiallyByPostIdAndCommentId(long postId, long id, PatchDto patchDto) {
+        Post postEntity = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("Post", "id", String.valueOf(postId)));
+
+        //Fetch Comment by CommentId
+        Comment commentEntity = commentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Comment", "id", String.valueOf(id)));
+
+        // validate comment belongs to that Particular Post
+        if (!commentEntity.getPost().getId().equals(postEntity.getId())) {
+            throw new BlogApiException(HttpStatus.BAD_REQUEST, "Bad Request Comment Not Found in Post");
+        }
+
+
+        partiallyUpdateCommentEntity(patchDto, commentEntity);
+
+        Comment updatedCommentEntity  = commentRepository.save(commentEntity);
+
+        // Map Comment Entity to Comment DTO
+        CommentDto updatedCommentDto = mapEntityToDto(updatedCommentEntity);
+
+        return updatedCommentDto;
+    }
+
+    @Override
+    public CommentDto updateCommentPartiallyByPostIdAndCommentIdUsingJsonPatch(Long postId, Long id, JsonPatch jsonPatch) {
+        //fetch posts by postId
+        Post postEntity=postRepository.findById(postId).orElseThrow(()->new ResourceNotFoundException("post","id",String.valueOf(postId)));
+        //fetch comments bt comment id
+        Comment commentEntity=commentRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("comment","id",String.valueOf(id)));
+        //validate comment that belongs to particular post
+        if(!commentEntity.getPost().getId().equals(postEntity.getId())){
+            throw new BlogApiException(HttpStatus.BAD_REQUEST,"Bad Request comment not fount in the post");
+
+        }
+        CommentDto commentDto=mapEntityToDto(commentEntity);
+        try {
+            commentDto=applyPatchToComment(jsonPatch,commentDto);
+        } catch (JsonPatchException e) {
+            throw new RuntimeException(e);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        Comment updatedCommentEntity = mapDtoToEntity(commentDto);
+        updatedCommentEntity.setId(commentEntity.getId());
+        updatedCommentEntity.setPost(postEntity);
+        commentRepository.save(updatedCommentEntity);
+        return commentDto;
+    }
+    private CommentDto mapEntityToDto(Comment savedCommentEntity) {
+        return  modelMapper.map(savedCommentEntity, CommentDto.class);
+    }
+
+    private Comment mapDtoToEntity(CommentDto commentDto) {
+        return modelMapper.map(commentDto, Comment.class);
+    }
+
+    private CommentDto applyPatchToComment(
+            JsonPatch patch, CommentDto commentDto)throws JsonPatchException, JsonProcessingException {
+        ObjectMapper objectMapper=new ObjectMapper();
+        JsonNode patched= patch.apply(objectMapper.convertValue(commentDto,JsonNode.class));
+        return objectMapper.treeToValue(patched,CommentDto.class);
     }
 
     private void partiallyUpdateCommentEntity(PatchDto patchDto, Comment commentEntity) {
@@ -107,44 +181,11 @@ public class CommentServiceImpl implements CommentService {
 
 
 
-    public CommentDto updateCommentsByPostIdAndCommentId(Long postId,long id,CommentDto commentDto) {
-        //fetch posts by postId
-        Post postEntity=postRepository.findById(postId).orElseThrow(()->new ResourceNotFoundException("post","id",String.valueOf(postId)));
-        //fetch comments bt comment id
-        Comment commentEntity=commentRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("comment","id",String.valueOf(id)));
-        //validate comment that belongs to particular post
-        if(!commentEntity.getPost().getId().equals(postEntity.getId())){
-            throw new BlogApiException(HttpStatus.BAD_REQUEST,"Bad Request comment not fount in the post");
-        }
-        //update old comment details with new comment Dto
-        commentEntity.setId(commentDto.getId());
-        commentEntity.setName(commentDto.getName());
-        commentEntity.setBody(commentDto.getBody());
-        //save updated comment entity
-        Comment updatedCommentEntity=commentRepository.save(commentEntity);
-        //map comment entity to comment dto
-        CommentDto updatedCommentDto=mapEntityToDto(updatedCommentEntity);
 
-                return updatedCommentDto;
     }
 
 
-    private CommentDto mapEntityToDto(Comment savedCommentEntity) {
-        CommentDto commentDto=new CommentDto();
-        commentDto.setId(savedCommentEntity.getId());
-        commentDto.setName(savedCommentEntity.getName());
-        commentDto.setEmail(savedCommentEntity.getEmail());
-        commentDto.setBody(savedCommentEntity.getBody());
-        return commentDto;
-    }
 
-    private Comment mapDtoToEntity(CommentDto commentDto) {
-        Comment comment=new Comment();
-        comment.setId(commentDto.getId());
-        comment.setName(commentDto.getName());
-        comment.setEmail(commentDto.getEmail());
-        comment.setBody(commentDto.getBody());
-        return comment;
-    }
 
-}
+
+

@@ -1,5 +1,6 @@
 package com.springboot.rta.socialmedia_app.controller;
 
+import com.github.fge.jsonpatch.JsonPatch;
 import com.springboot.rta.socialmedia_app.dto.CommentDto;
 import com.springboot.rta.socialmedia_app.dto.PatchDto;
 import com.springboot.rta.socialmedia_app.service.CommentService;
@@ -42,12 +43,12 @@ public class CommentController {
     public ResponseEntity<CommentDto> updateCommentsByPostIdAndCommentId(@PathVariable("postId") Long postId,
                                                                                @PathVariable("id")long id,
                                                                                @RequestBody CommentDto commentDto) {
-        CommentDto updatedCommentDto = commentService.updateCommentsByPostIdAndCommentId(postId);
+        CommentDto updatedCommentDto = commentService.updateCommentsByPostIdAndCommentId(postId,id,commentDto);
         return new ResponseEntity<>(updatedCommentDto, HttpStatus.OK);
     }
 
     //Patch Comment By CommentId and PostId
-     @PatchMapping("/posts/{postId}/comments/{id}")
+    // @PatchMapping("/posts/{postId}/comments/{id}")
     public ResponseEntity<CommentDto> partiallyUpdateCommentByPostIdAndCommentId(@PathVariable("postId") Long postId,
                                                                                  @PathVariable("id") Long id,
                                                                                  @RequestBody PatchDto patchDto) {
@@ -59,5 +60,16 @@ public class CommentController {
         }
         return new ResponseEntity<>(updatedCommentDto, HttpStatus.OK);
     }
+
+    @PatchMapping("/posts/{postId}/comments/{id}")
+    public ResponseEntity<CommentDto> partiallyUpdateCommentByPostIdAndCommentIdUsingJsonPatchLib(@PathVariable("postId") Long postId,
+                                                                                                  @PathVariable("id") Long id,
+                                                                                                  @RequestBody JsonPatch jsonPatch) {
+        CommentDto updatedCommentDto = null;
+        updatedCommentDto = commentService.updateCommentPartiallyByPostIdAndCommentIdUsingJsonPatch(postId, id, jsonPatch);
+        return new ResponseEntity<>(updatedCommentDto, HttpStatus.OK);
+    }
+
+
 
 }
