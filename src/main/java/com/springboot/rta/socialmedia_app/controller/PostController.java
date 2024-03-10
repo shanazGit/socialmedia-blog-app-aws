@@ -3,6 +3,7 @@ package com.springboot.rta.socialmedia_app.controller;
 import com.springboot.rta.socialmedia_app.dto.PostDto;
 import com.springboot.rta.socialmedia_app.payLoad.PostResponse;
 import com.springboot.rta.socialmedia_app.service.PostService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,7 @@ public class PostController {
    private PostService postService;
 
     @PostMapping
-    public ResponseEntity<PostDto> createPost(@RequestBody PostDto postDto){
+    public ResponseEntity<PostDto> createPost(@RequestBody @Valid PostDto postDto){
      PostDto  savedPostDto =postService.createPost(postDto);
         return new ResponseEntity(savedPostDto, HttpStatus.CREATED);
     }
@@ -35,7 +36,7 @@ public class PostController {
        return ResponseEntity.ok (postService.findPostByID(id));
     }
     @PutMapping("/{id}")
-    public ResponseEntity<PostDto> updatePost(@RequestBody PostDto postDto,@PathVariable("id")long id){
+    public ResponseEntity<PostDto> updatePost(@RequestBody @Valid PostDto postDto,@PathVariable("id")long id){
         PostDto updatedPostResponse=postService.updatePost(postDto,id);
         return ResponseEntity.ok(updatedPostResponse);
     }
