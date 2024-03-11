@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,6 +17,7 @@ public class PostController {
    private PostService postService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PostDto> createPost(@RequestBody @Valid PostDto postDto){
      PostDto  savedPostDto =postService.createPost(postDto);
         return new ResponseEntity(savedPostDto, HttpStatus.CREATED);
@@ -36,11 +38,13 @@ public class PostController {
        return ResponseEntity.ok (postService.findPostByID(id));
     }
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PostDto> updatePost(@RequestBody @Valid PostDto postDto,@PathVariable("id")long id){
         PostDto updatedPostResponse=postService.updatePost(postDto,id);
         return ResponseEntity.ok(updatedPostResponse);
     }
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deletePost(@PathVariable("id") long id){
         postService.deletePostById(id);
         return ResponseEntity.ok("post deleted successfully::"+id);
